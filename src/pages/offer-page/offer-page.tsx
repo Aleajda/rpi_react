@@ -1,20 +1,26 @@
-import React from "react";
-import { FullOffer } from "../../types/offer";
+import React, { useState } from "react";
+import { FullOffer, OffersList } from "../../types/offer";
 import { useParams } from "react-router-dom";
-import Logo from "../../components/logo/logo";
-import NearPlacesCard from "../../components/near-places-card/near-places-card";
+import { ReviewsForm } from "../../components/reviews-form/reviews-form";
+import { Review } from "../../types/reviews";
 import PageNotFound from "../page-not-found/page-not-found";
-import ReviewsForm from "../../components/reviews-form/reviews-form";
+import Logo from "../../components/logo/logo";
+import Map from "../../components/map/map";
+import ReviewsList from "../../components/reviews-list/reviews-list";
+import NearPlacesCardList from "../../components/near-places-list/near-places-list";
+
+
 
 type OfferProps = {
     offers: FullOffer[];
+    reviews: Review[];
 };
 
-export default function OfferPage({ offers }: OfferProps) {
+export default function OfferPage({ offers, reviews: initialReviews }: OfferProps) {
+    const [reviews, setReviews] = useState<Review[]>(initialReviews);
+
     const { id } = useParams();
-    debugger
     const offer = offers.find((o) => o.id === id);
-    debugger
 
 
     if (!offer) {
@@ -23,7 +29,50 @@ export default function OfferPage({ offers }: OfferProps) {
 
     const ratingPercent = Math.round(offer.rating * 20);
 
-    
+    const handleAddReview = (newReview: Review) => {
+        setReviews((prev) => [newReview, ...prev]);
+    };
+
+    const nearOffers = offers
+        .filter((o) => o.id !== offer.id && o.city.name === offer.city.name)
+        .slice(0, 3);
+
+    const nearOffersList: OffersList[] = nearOffers.map((o) => ({
+        id: o.id,
+        title: o.title,
+        type: o.type,
+        price: o.price,
+        isPremium: o.isPremium,
+        rating: o.rating,
+        previewImage: o.images[0],
+        city: o.city,
+        location: o.location,
+        isFavorite: o.isFavorite ?? false
+    }));
+
+
+
+    const city = {
+        lat: offer.city.location.latitude,
+        lng: offer.city.location.longitude,
+        zoom: offer.city.location.zoom
+    };
+
+    const points = [
+        {
+            id: offer.id,
+            title: offer.title,
+            lat: offer.location.latitude,
+            lng: offer.location.longitude
+        },
+        ...nearOffers.map((o) => ({
+            id: o.id,
+            title: o.title,
+            lat: o.location.latitude,
+            lng: o.location.longitude
+        }))
+    ];
+
     return (
         <div className="page">
             <header className="header">
@@ -133,58 +182,23 @@ export default function OfferPage({ offers }: OfferProps) {
                             </div>
 
                             <section className="offer__reviews reviews">
-                                <h2 className="reviews__title">
-                                    Reviews &middot; <span className="reviews__amount">1</span>
-                                </h2>
-                                <ul className="reviews__list">
-                                    <li className="reviews__item">
-                                        <div className="reviews__user user">
-                                            <div className="reviews__avatar-wrapper user__avatar-wrapper">
-                                                <img
-                                                    className="reviews__avatar user__avatar"
-                                                    src="/img/avatar-max.jpg"
-                                                    width="54"
-                                                    height="54"
-                                                    alt="Reviews avatar"
-                                                />
-                                            </div>
-                                            <span className="reviews__user-name">Max</span>
-                                        </div>
-                                        <div className="reviews__info">
-                                            <div className="reviews__rating rating">
-                                                <div className="reviews__stars rating__stars">
-                                                    <span style={{ width: "80%" }}></span>
-                                                    <span className="visually-hidden">Rating</span>
-                                                </div>
-                                            </div>
-                                            <p className="reviews__text">
-                                                A quiet cozy and picturesque that hides behind a river.
-                                            </p>
-                                            <time
-                                                className="reviews__time"
-                                                dateTime="2019-04-24"
-                                            >
-                                                April 2019
-                                            </time>
-                                        </div>
-                                    </li>
-                                </ul>
-                                <ReviewsForm/>
+
+                                <ReviewsList reviews={reviews} />
+                                <ReviewsForm onAddReview={handleAddReview} />
                             </section>
                         </div>
                     </div>
 
-                    <section className="offer__map map"></section>
+                    <section
+                        className="offer__map map">
+                        <Map city={city} points={points} />
+                    </section>
                 </section>
 
                 <div className="container">
                     <section className="near-places places">
                         <h2 className="near-places__title">Other places in the neighbourhood</h2>
-                        <div className="near-places__list places__list">
-                            <NearPlacesCard />
-                            <NearPlacesCard />
-                            <NearPlacesCard />
-                        </div>
+                        <NearPlacesCardList offersList={nearOffersList} />
                     </section>
                 </div>
             </main>

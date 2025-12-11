@@ -3,20 +3,22 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AppRoute, AuthorizationStatus } from "../../const";
 import { PrivateRoute } from "../private-route/private-route";
 import { FullOffer, OffersList } from "../../types/offer";
-import MainPage from "../../pages/main-page/main-page";
+import { Review } from "../../types/reviews";
 import LoginPage from "../../pages/login-page/login-page";
 import OfferPage from "../../pages/offer-page/offer-page";
 import FavoritesPage from "../../pages/favorites-page/favorites-page";
 import PageNotFound from "../../pages/page-not-found/page-not-found";
+import MainPage from "../../pages/main-page/main-page";
 
 
 type AppMainPageProps = {
     rentalOffersCount: number;
     offers: FullOffer[];
     offersList: OffersList[];
+    reviews: Review[];
 }
 
-function App({ rentalOffersCount, offers, offersList }: AppMainPageProps): JSX.Element {
+function App({ rentalOffersCount, offers, offersList, reviews }: AppMainPageProps): JSX.Element {
     return (
         <BrowserRouter>
             <Routes>
@@ -30,7 +32,7 @@ function App({ rentalOffersCount, offers, offersList }: AppMainPageProps): JSX.E
                 />
                 <Route
                     path={`${AppRoute.Offer}/:id`} 
-                    element={<OfferPage offers={offers} />}
+                    element={<OfferPage offers={offers} reviews={reviews}/>}
                 />
                 <Route
                     path={AppRoute.Favorites}

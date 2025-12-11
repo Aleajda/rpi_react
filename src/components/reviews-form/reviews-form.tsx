@@ -1,8 +1,39 @@
-import React from "react";
+import React, { useState } from "react";
+import { Review } from "../../types/reviews";
 
-export default function ReviewsForm() {
+
+type ReviewsFormProps = {
+    onAddReview: (review: Review) => void;
+}
+
+function ReviewsForm({ onAddReview }: ReviewsFormProps) {
+
+    const [review, setReview] = useState("");
+    const [rating, setRating] = useState(0);
+
+    const handleSubmitReview = (evt: React.FormEvent<HTMLFormElement>) => {
+        evt.preventDefault();
+        if (rating === 0 || review.length > 50) return;
+
+        const newReview: Review = {
+            id: crypto.randomUUID(),
+            rating,
+            comment: review,
+            date: new Date().toISOString(),
+            user: {
+                name: 'You',
+                avatarUrl: "/img/avatar.svg",
+                isPro: false
+            }
+        };
+        onAddReview(newReview);
+
+        setReview("");
+        setRating(0);
+    };
+
     return (
-        <form className="reviews__form form" action="#" method="post">
+        <form className="reviews__form form" action="#" method="post" onSubmit={handleSubmitReview}>
             <svg width="0" height="0">
                 <symbol id="icon-star" viewBox="0 0 13 12">
                     <path
@@ -25,6 +56,8 @@ export default function ReviewsForm() {
                             value={num}
                             id={`${num}-stars`}
                             type="radio"
+                            checked={rating === num}
+                            onChange={() => setRating(num)}
                         />
                         <label
                             htmlFor={`${num}-stars`}
@@ -32,7 +65,7 @@ export default function ReviewsForm() {
                             title="rating"
                         >
                             <svg className="form__star-image" width="37" height="33">
-                                <use xlinkHref="#icon-star"></use>
+                                <use href="#icon-star"></use>
                             </svg>
                         </label>
                     </React.Fragment>
@@ -44,6 +77,8 @@ export default function ReviewsForm() {
                 id="review"
                 name="review"
                 placeholder="Tell how was your stay..."
+                value={review}
+                onChange={(e) => setReview(e.target.value)}
             ></textarea>
 
             <div className="reviews__button-wrapper">
@@ -56,7 +91,7 @@ export default function ReviewsForm() {
                 <button
                     className="reviews__submit form__submit button"
                     type="submit"
-                    disabled
+                    disabled={rating === 0 || review.length > 50}
                 >
                     Submit
                 </button>
@@ -64,3 +99,5 @@ export default function ReviewsForm() {
         </form>
     );
 }
+
+export { ReviewsForm };

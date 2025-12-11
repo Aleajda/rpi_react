@@ -5,6 +5,7 @@ import { Settings } from './consts'
 import App from './components/app/app'
 import { offers } from './mocks/offers'
 import { offersList } from './mocks/offers-list'
+import { reviews } from './mocks/reviews'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -12,6 +13,7 @@ createRoot(document.getElementById('root')!).render(
       rentalOffersCount={Settings.rentOffersCount}
       offers={offers}
       offersList={offersList}
+      reviews={reviews}
     />
   </StrictMode>,
 )
