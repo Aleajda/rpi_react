@@ -3,13 +3,12 @@ import { FullOffer, OffersList } from "../../types/offer";
 import { useParams } from "react-router-dom";
 import { ReviewsForm } from "../../components/reviews-form/reviews-form";
 import { Review } from "../../types/reviews";
+import Map from "../../components/map/map";
 import PageNotFound from "../page-not-found/page-not-found";
 import Logo from "../../components/logo/logo";
-import Map from "../../components/map/map";
 import ReviewsList from "../../components/reviews-list/reviews-list";
 import NearPlacesCardList from "../../components/near-places-list/near-places-list";
-
-
+import CitiesCardList from "../../components/cities-card-list/cities-card-list";
 
 type OfferProps = {
     offers: FullOffer[];
@@ -18,6 +17,7 @@ type OfferProps = {
 
 export default function OfferPage({ offers, reviews: initialReviews }: OfferProps) {
     const [reviews, setReviews] = useState<Review[]>(initialReviews);
+    const [selectedOfferId, setSelectedOfferId] = useState<string | undefined>(undefined);
 
     const { id } = useParams();
     const offer = offers.find((o) => o.id === id);
@@ -50,8 +50,6 @@ export default function OfferPage({ offers, reviews: initialReviews }: OfferProp
         isFavorite: o.isFavorite ?? false
     }));
 
-
-
     const city = {
         lat: offer.city.location.latitude,
         lng: offer.city.location.longitude,
@@ -72,6 +70,10 @@ export default function OfferPage({ offers, reviews: initialReviews }: OfferProp
             lng: o.location.longitude
         }))
     ];
+
+    const handleListItemHover = (offerId: string | undefined) => {
+        setSelectedOfferId(offerId);
+    };
 
     return (
         <div className="page">
@@ -191,14 +193,14 @@ export default function OfferPage({ offers, reviews: initialReviews }: OfferProp
 
                     <section
                         className="offer__map map">
-                        <Map city={city} points={points} />
+                        <Map city={city} points={points} selectedPointId={selectedOfferId} />
                     </section>
                 </section>
 
                 <div className="container">
                     <section className="near-places places">
                         <h2 className="near-places__title">Other places in the neighbourhood</h2>
-                        <NearPlacesCardList offersList={nearOffersList} />
+                        <CitiesCardList offersList={nearOffersList} onListItemHover={handleListItemHover}/>
                     </section>
                 </div>
             </main>

@@ -1,10 +1,11 @@
+
 type OfferLocation = {
     latitude: number;
     longitude: number;
     zoom: number;
 };
 
-type CityOffer = {
+export type CityOffer = {
     name: string;
     location: OfferLocation;
 }
@@ -31,8 +32,7 @@ export type FullOffer = {
     host: HostOffer;
     images: string[];
     maxAdults: number;
-}
-
+};
 
 export type OffersList = {
     id: string;
@@ -42,7 +42,7 @@ export type OffersList = {
     city: CityOffer;
     location: OfferLocation;
     isFavorite: boolean;
+    isPremium: boolean;
     rating: number;
     previewImage: string;
-    isPremium: boolean;
-}
+};

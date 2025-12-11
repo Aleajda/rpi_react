@@ -1,4 +1,4 @@
-import {useEffect, useState, useRef} from 'react';
+import { useEffect, useState, useRef } from 'react';
 import leaflet from 'leaflet';
 
 type City = {
@@ -29,10 +29,10 @@ export default function useMap(mapRef: React.RefObject<HTMLDivElement | null>, c
 
       setMap(instance);
       isRenderedRef.current = true;
-    } else if (mapRef.current !== null && map) {
+    } else if (map) {
       map.setView([city.lat, city.lng], city.zoom);
     }
-  }, [mapRef, city, map]);
+  }, [mapRef, map, city.lat, city.lng, city.zoom]);
 
   return map;
 }

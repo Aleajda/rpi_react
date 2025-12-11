@@ -10,11 +10,14 @@ type PlaceCardProps = {
   previewImage: string;
   rating: number;
 
-  /** Новый проп */
-  cardClassName: string;     // cities__card / near-places__card
-  imgWrapperClass: string;   // cities__image-wrapper / near-places__image-wrapper
+
+  cardClassName: string;
+  imgWrapperClass: string;
   imgWidth: number;
   imgHeight: number;
+
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 };
 
 export default function PlaceCard({
@@ -28,12 +31,18 @@ export default function PlaceCard({
   cardClassName,
   imgWrapperClass,
   imgWidth,
-  imgHeight
+  imgHeight,
+  onMouseEnter,
+  onMouseLeave
 }: PlaceCardProps) {
   const ratingPercent = Math.round(rating * 20);
 
   return (
-    <article className={`${cardClassName} place-card`}>
+    <article
+      className={`${cardClassName} place-card`}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
       {isPremium && (
         <div className="place-card__mark">
           <span>Premium</span>
@@ -44,6 +53,7 @@ export default function PlaceCard({
         <Link to={`${AppRoute.Offer}/${id}`}>
           <img
             className="place-card__image"
+            style={{width: '260px', height: '200px'}}
             src={previewImage}
             width={imgWidth}
             height={imgHeight}
