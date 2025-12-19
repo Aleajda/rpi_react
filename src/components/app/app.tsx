@@ -14,7 +14,7 @@ import MainPage from "../../pages/main-page/main-page";
 type AppMainPageProps = {
     rentalOffersCount: number;
     offers: FullOffer[];
-    offersList: OffersList[];
+    offersList: FullOffer[];
     reviews: Review[];
 }
 

@@ -13,7 +13,7 @@ function ReviewsForm({ onAddReview }: ReviewsFormProps) {
 
     const handleSubmitReview = (evt: React.FormEvent<HTMLFormElement>) => {
         evt.preventDefault();
-        if (rating === 0 || review.length > 50) return;
+        if (rating === 0 || review.length < 50) return;
 
         const newReview: Review = {
             id: crypto.randomUUID(),
@@ -91,7 +91,7 @@ function ReviewsForm({ onAddReview }: ReviewsFormProps) {
                 <button
                     className="reviews__submit form__submit button"
                     type="submit"
-                    disabled={rating === 0 || review.length > 50}
+                    disabled={rating === 0 || review.length < 50}
                 >
                     Submit
                 </button>

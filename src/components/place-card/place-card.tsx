@@ -9,8 +9,7 @@ type PlaceCardProps = {
   isPremium: boolean;
   previewImage: string;
   rating: number;
-
-
+  isFavorite: boolean;
   cardClassName: string;
   imgWrapperClass: string;
   imgWidth: number;
@@ -26,6 +25,7 @@ export default function PlaceCard({
   type,
   price,
   isPremium,
+  isFavorite,
   previewImage,
   rating,
   cardClassName,
@@ -69,7 +69,12 @@ export default function PlaceCard({
             <span className="place-card__price-text">/ night</span>
           </div>
         </div>
-
+        <button style={!isFavorite ? {display: 'none'} : {}} className="place-card__bookmark-button place-card__bookmark-button--active button" type="button">
+            <svg className="place-card__bookmark-icon" width="18" height="19">
+                <use xlinkHref="/img/icon-bookmark.svg"></use>
+            </svg>
+            <span className="visually-hidden">In bookmarks</span>
+        </button>
         <div className="place-card__rating rating">
           <div className="place-card__stars rating__stars">
             <span style={{ width: `${ratingPercent}%` }}></span>

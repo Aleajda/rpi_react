@@ -15,7 +15,7 @@ createRoot(document.getElementById('root')!).render(
       <App 
         rentalOffersCount={Settings.rentOffersCount}
         offers={offers}
-        offersList={offersList}
+        offersList={offers}
         reviews={reviews}
       />
     </Provider>

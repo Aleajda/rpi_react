@@ -1,5 +1,5 @@
 import { SortOffersType } from "./const";
-import { CityOffer, OffersList } from "./types/offer";
+import { CityOffer, FullOffer, OffersList } from "./types/offer";
 import { SortOffer } from "./types/sort";
 
 export function getCity(cityName: string, cities: CityOffer[]): CityOffer | undefined {
@@ -10,7 +10,7 @@ export function getOffersByCity(cityName: string, offers: OffersList[]): OffersL
     return offers.filter((offer) => offer.city.name.toLowerCase() === cityName.toLowerCase());
 }
 
-export function getFavoritesOffers(offers: OffersList[]): OffersList[] | undefined {
+export function getFavoritesOffers(offers: FullOffer[]): FullOffer[] | undefined {
     return offers.filter((offer) => offer.isFavorite)
 }
 
