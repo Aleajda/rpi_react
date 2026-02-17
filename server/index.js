@@ -6,6 +6,7 @@ import { User } from './models/user.js';
 import { Offer } from './models/offer.js';
 import { Review } from './models/review.js';
 import router from './routes/index.js';
+import errorHandlingMiddleware from './middleware/ErrorHandlingMiddleware.js';
 
 dotenv.config();
 
@@ -14,7 +15,9 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+app.use('/static', express.static('static'));
 app.use('/', router);
+app.use(errorHandlingMiddleware);
 
 async function start() {
   try {
