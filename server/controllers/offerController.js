@@ -1,6 +1,7 @@
 import { Offer } from '../models/offer.js';
 import ApiError from '../error/ApiError.js';
 import { adaptOfferToClient, adaptFullOfferToClient } from '../adapters/offerAdapter.js';
+import { User } from '../models/user.js';
 
 export async function createOffer(req, res, next) {
   try {
@@ -84,5 +85,37 @@ export const getFullOffer = async (req, res, next) => {
     return res.send(fullOffer);
   } catch (error) {
     next(ApiError.internal('Не удалось получить предложение: ' + error.message));
+  }
+};
+
+export const getFavoriteOffers = async (req, res, next) => {
+  try {
+    const offers = await Offer.findAll({ where: { isFavorite: true } });
+    return res.json(offers.map(adaptOfferToClient));
+  } catch (error) {
+    next(ApiError.internal('Ошибка получения списка избранных предложений'));
+  }
+};
+
+export const toggleFavorite = async (req, res, next) => {
+  try {
+    const { offerId, status } = req.params;
+
+    const isFavorite = status === '1' || status === 'true';
+
+    const offer = await Offer.findByPk(offerId, {
+      include: [{ model: User, as: 'author' }]
+    });
+
+    if (!offer) {
+      return next(ApiError.badRequest('Offer not found'));
+    }
+
+    offer.isFavorite = isFavorite;
+    await offer.save();
+
+    return res.json(adaptFullOfferToClient(offer, offer.author));
+  } catch (error) {
+    next(ApiError.internal('Ошибка обновления избранного'));
   }
 };

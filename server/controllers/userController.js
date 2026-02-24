@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import ApiError from '../error/ApiError.js';
 import { User } from '../models/user.js';
 
@@ -41,3 +42,55 @@ export const registration = async (req, res, next) => {
   }
 };
 
+export const login = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return next(ApiError.badRequest('Некорректный email или password'));
+    }
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) return next(ApiError.badRequest('Пользователь не найден'));
+
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) return next(ApiError.badRequest('Неверный пароль'));
+
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'secret', { expiresIn: '24h' });
+
+    return res.json({ token });
+  } catch (error) {
+    next(ApiError.internal('Ошибка авторизации'));
+  }
+};
+
+export const checkAuth = (req, res, next) => {
+  try {
+    const user = req.user;
+
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        userType: user.userType,
+        avatar: user.avatar
+      },
+      process.env.JWT_SECRET || 'secret',
+      { expiresIn: '24h' }
+    );
+
+    return res.json({
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      avatar: user.avatar,
+      isPro: user.userType === 'pro',
+      token
+    });
+  } catch (error) {
+    next(ApiError.internal('Ошибка проверки авторизации'));
+  }
+};
+
+export const logout = (req, res) => res.status(204).send();
