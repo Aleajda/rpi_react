@@ -7,7 +7,11 @@ const cityCoordinates = {
   Dusseldorf: { latitude: 51.2277, longitude: 6.7735, zoom: 13 }
 };
 
-const getBaseUrl = () => `${process.env.HOST}:${process.env.PORT || 5000}`;
+const getBaseUrl = () => {
+  const host = process.env.HOST || 'http://localhost';
+  const port = process.env.PORT || 5000;
+  return `${host}:${port}`;
+};
 
 const adaptOfferToClient = (offer) => {
   const baseUrl = getBaseUrl();
@@ -23,6 +27,8 @@ const adaptOfferToClient = (offer) => {
     title: offer.title,
     type: offer.type,
     price: offer.price,
+    rooms: offer.rooms,
+    guests: offer.guests,
     city: {
       name: offer.city,
       location: cityLocation
@@ -60,6 +66,8 @@ const adaptFullOfferToClient = (offer, author) => {
     description: offer.description,
     type: offer.type,
     price: offer.price,
+    rooms: offer.rooms,
+    guests: offer.guests,
     city: {
       name: offer.city,
       location: cityLocation

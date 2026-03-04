@@ -1,4 +1,8 @@
-const getBaseUrl = () => `${process.env.HOST}:${process.env.PORT || 5000}`;
+const getBaseUrl = () => {
+  const host = process.env.HOST || 'http://localhost';
+  const port = process.env.PORT || 5000;
+  return `${host}:${port}`;
+};
 
 const adaptReviewToClient = (review) => {
   const baseUrl = getBaseUrl();

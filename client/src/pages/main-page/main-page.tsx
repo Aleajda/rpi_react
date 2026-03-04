@@ -1,40 +1,29 @@
-import React, { JSX } from 'react'
-import CitiesCard from '../../components/cities-card/cities-card'
+import type { JSX } from 'react';
+import CitiesCard from '../../components/cities-card/cities-card';
+import { useAppSelector } from '../../hooks';
+import { getOffers, getOffersDataLoadingStatus } from '../../store/selectors';
+import { LoadingPage } from '../../components/loading-page/loading-page';
 
+export default function MainPage(): JSX.Element {
+  const offers = useAppSelector(getOffers);
+  const isOffersDataLoading = useAppSelector(getOffersDataLoadingStatus);
 
-type MainPageProps = {
-    rentalOffersCount: number | null;
-}
+  const parisOffers = offers.filter((offer) => offer.city.name === 'Paris');
 
-export default function MainPage({rentalOffersCount}: MainPageProps): JSX.Element {
+  if (isOffersDataLoading) {
+    return <LoadingPage />;
+  }
+
   return (
-    <>
     <div className="page page--gray page--main">
       <header className="header">
         <div className="container">
           <div className="header__wrapper">
             <div className="header__left">
               <a className="header__logo-link header__logo-link--active">
-                <img className="header__logo" src="img/logo.svg" alt="Rent service logo" width="81" height="41"/>
+                <img className="header__logo" src="img/logo.svg" alt="Rent service logo" width="81" height="41" />
               </a>
             </div>
-            <nav className="header__nav">
-              <ul className="header__nav-list">
-                <li className="header__nav-item user">
-                  <a className="header__nav-link header__nav-link--profile" href="#">
-                    <div className="header__avatar-wrapper user__avatar-wrapper">
-                    </div>
-                    <span className="header__user-name user__name">Myemail@gmail.com</span>
-                    <span className="header__favorite-count">3</span>
-                  </a>
-                </li>
-                <li className="header__nav-item">
-                  <a className="header__nav-link" href="#">
-                    <span className="header__signout">Sign out</span>
-                  </a>
-                </li>
-              </ul>
-            </nav>
           </div>
         </div>
       </header>
@@ -45,33 +34,8 @@ export default function MainPage({rentalOffersCount}: MainPageProps): JSX.Elemen
           <section className="locations container">
             <ul className="locations__list tabs__list">
               <li className="locations__item">
-                <a className="locations__item-link tabs__item" href="#">
-                  <span>Paris</span>
-                </a>
-              </li>
-              <li className="locations__item">
-                <a className="locations__item-link tabs__item" href="#">
-                  <span>Cologne</span>
-                </a>
-              </li>
-              <li className="locations__item">
-                <a className="locations__item-link tabs__item" href="#">
-                  <span>Brussels</span>
-                </a>
-              </li>
-              <li className="locations__item">
                 <a className="locations__item-link tabs__item tabs__item--active">
-                  <span>Amsterdam</span>
-                </a>
-              </li>
-              <li className="locations__item">
-                <a className="locations__item-link tabs__item" href="#">
-                  <span>Hamburg</span>
-                </a>
-              </li>
-              <li className="locations__item">
-                <a className="locations__item-link tabs__item" href="#">
-                  <span>Dusseldorf</span>
+                  <span>Paris</span>
                 </a>
               </li>
             </ul>
@@ -81,7 +45,7 @@ export default function MainPage({rentalOffersCount}: MainPageProps): JSX.Elemen
           <div className="cities__places-container container">
             <section className="cities__places places">
               <h2 className="visually-hidden">Places</h2>
-              <b className="places__found">{rentalOffersCount} places to stay in Amsterdam</b>
+              <b className="places__found">{parisOffers.length} places to stay in Paris</b>
               <form className="places__sorting" action="#" method="get">
                 <span className="places__sorting-caption">Sort by</span>
                 <span className="places__sorting-type" tabIndex={0}>
@@ -90,18 +54,11 @@ export default function MainPage({rentalOffersCount}: MainPageProps): JSX.Elemen
                     <use href="#icon-arrow-select"></use>
                   </svg>
                 </span>
-                <ul className="places__options places__options--custom places__options--opened">
-                  <li className="places__option places__option--active" tabIndex={0}>Popular</li>
-                  <li className="places__option" tabIndex={0}>Price: low to high</li>
-                  <li className="places__option" tabIndex={0}>Price: high to low</li>
-                  <li className="places__option" tabIndex={0}>Top rated first</li>
-                </ul>
               </form>
               <div className="cities__places-list places__list tabs__content">
-                    <CitiesCard/>
-                    <CitiesCard/>
-                    <CitiesCard/>
-                    <CitiesCard/>
+                {parisOffers.map((offer) => (
+                  <CitiesCard key={offer.id} offer={offer} />
+                ))}
               </div>
             </section>
             <div className="cities__right-section">
@@ -111,6 +68,5 @@ export default function MainPage({rentalOffersCount}: MainPageProps): JSX.Elemen
         </div>
       </main>
     </div>
-    </>
-  )
+  );
 }
