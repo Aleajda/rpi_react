@@ -4,25 +4,34 @@ const getBaseUrl = () => {
   return `${host}:${port}`;
 };
 
-const adaptReviewToClient = (review) => {
+const withBaseUrl = (path) => {
   const baseUrl = getBaseUrl();
+  if (!path) {
+    return '';
+  }
 
-  const prepareUrl = (url) =>
-    url && !url.startsWith('http')
-      ? `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`
-      : url;
+  if (path.startsWith('http')) {
+    return path;
+  }
+
+  return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+};
+
+// формат под маппинг клиента в fetchReviewsAction / sendReviewAction
+const adaptReviewToClient = (review) => {
+  const dateIso = review.publishDate instanceof Date
+    ? review.publishDate.toISOString()
+    : new Date(review.publishDate).toISOString();
 
   return {
-    id: String(review.id),
+    reviewId: String(review.id),
     comment: review.text,
-    rating: parseFloat(review.rating),
-    date: review.publishDate instanceof Date
-      ? review.publishDate.toISOString()
-      : new Date(review.publishDate).toISOString(),
+    rating: typeof review.rating === 'number' ? review.rating : parseFloat(review.rating),
+    date: dateIso,
     user: {
-      name: review.author?.username || 'Unknown',
-      avatarUrl: prepareUrl(review.author?.avatar || ''),
-      isPro: review.author?.userType === 'pro'
+      username: review.author?.username || 'Unknown',
+      avatarUrl: withBaseUrl(review.author?.avatar || ''),
+      pro: review.author?.userType === 'pro'
     }
   };
 };

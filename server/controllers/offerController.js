@@ -2,24 +2,50 @@ import { Offer } from '../models/offer.js';
 import ApiError from '../error/ApiError.js';
 import { adaptOfferToClient, adaptFullOfferToClient } from '../adapters/offerAdapter.js';
 import { User } from '../models/user.js';
+import fs from 'fs';
+import path from 'path';
 
 export async function createOffer(req, res, next) {
   try {
     const {
       title, description, publishDate, city,
       isPremium, isFavorite, rating, type, rooms, guests, price,
-      features, commentsCount, latitude, longitude, userId
+      features, commentsCount, latitude, longitude, userId,
+      previewImageBase64, photosBase64
     } = req.body;
 
-    if (!req.files?.previewImage || req.files.previewImage.length === 0) {
-      return next(ApiError.badRequest('Превью изображение обязательно для загрузки'));
+    if (!previewImageBase64) {
+      return next(ApiError.badRequest('Превью изображение обязательно (previewImageBase64)'));
     }
 
-    const previewImagePath = `/static/${req.files.previewImage[0].filename}`;
+    // убеждаемся, что папка static есть
+    if (!fs.existsSync('static')) {
+      fs.mkdirSync('static');
+    }
 
+    // превью из base64
+    const previewBuffer = Buffer.from(
+      String(previewImageBase64).replace(/^data:image\/\w+;base64,/, ''),
+      'base64'
+    );
+    const previewFilename = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.png`;
+    const previewPath = path.join('static', previewFilename);
+    fs.writeFileSync(previewPath, previewBuffer);
+    const previewImagePath = `/static/${previewFilename}`;
+
+    // массив фотографий из base64
     let processedPhotos = [];
-    if (req.files?.photos) {
-      processedPhotos = req.files.photos.map(file => `/static/${file.filename}`);
+    if (Array.isArray(photosBase64)) {
+      processedPhotos = photosBase64.map((photoBase64) => {
+        const photoBuffer = Buffer.from(
+          String(photoBase64).replace(/^data:image\/\w+;base64,/, ''),
+          'base64'
+        );
+        const photoFilename = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.png`;
+        const photoPath = path.join('static', photoFilename);
+        fs.writeFileSync(photoPath, photoBuffer);
+        return `/static/${photoFilename}`;
+      });
     }
 
     let parsedFeatures = [];
@@ -27,7 +53,7 @@ export async function createOffer(req, res, next) {
       try {
         parsedFeatures = typeof features === 'string' ? JSON.parse(features) : features;
       } catch {
-        parsedFeatures = features.split(',');
+        parsedFeatures = String(features).split(',');
       }
     }
 
@@ -52,7 +78,7 @@ export async function createOffer(req, res, next) {
       authorId: userId
     });
 
-    return res.status(201).json(offer);
+    return res.status(201).json(adaptFullOfferToClient(offer, null));
   } catch (error) {
     next(ApiError.internal('Не удалось добавить предложение: ' + error.message));
   }
@@ -73,7 +99,7 @@ export const getFullOffer = async (req, res, next) => {
     const { id } = req.params;
 
     const offer = await Offer.findByPk(id, {
-      include: { model: (await import('../models/user.js')).User, as: 'author' }
+      include: [{ model: User, as: 'author' }]
     });
 
     if (!offer) {

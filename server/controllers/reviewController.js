@@ -6,7 +6,8 @@ import { adaptReviewToClient } from '../adapters/reviewAdapter.js';
 
 export const addReview = async (req, res, next) => {
   try {
-    const { offerId } = req.params;
+    // offerId может прийти либо в params (/comments/:offerId), либо в body (/comments)
+    const offerId = req.params.offerId || req.body.offerId;
     const { comment, rating } = req.body;
 
     if (!comment || rating === undefined || rating === null) {
@@ -39,6 +40,7 @@ export const addReview = async (req, res, next) => {
       include: [{ model: User, as: 'author', attributes: ['id', 'username', 'avatar', 'userType'] }]
     });
 
+    // вернуть формат под sendReviewAction
     return res.status(201).json(adaptReviewToClient(created));
   } catch (error) {
     next(ApiError.internal('Ошибка добавления отзыва'));

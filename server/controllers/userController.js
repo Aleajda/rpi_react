@@ -2,42 +2,60 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import ApiError from '../error/ApiError.js';
 import { User } from '../models/user.js';
-
+import fs from 'fs';
+import path from 'path';
 export const registration = async (req, res, next) => {
   try {
-    const { email, password, userType, username } = req.body;
+    const { email, password, username, userType, avatarBase64 } = req.body;
 
-    if (!email || !password) {
-      return next(ApiError.badRequest('Некорректный email или password'));
+    if (!email || !password || !username) {
+      return next(ApiError.badRequest('Email, password и username обязательны'));
     }
 
     const candidate = await User.findOne({ where: { email } });
     if (candidate) {
-      return next(ApiError.badRequest('Пользователь с таким email уже существует'));
+      return next(ApiError.badRequest('Пользователь уже существует'));
     }
 
-    const avatarImage = req.file ? `/static/${req.file.filename}` : null;
+    let avatarImage = null;
+
+    if (avatarBase64) {
+
+      const base64Data = avatarBase64.replace(/^data:image\/\w+;base64,/, '');
+      const buffer = Buffer.from(base64Data, 'base64');
+
+      if (!fs.existsSync('static')) {
+        fs.mkdirSync('static', { recursive: true });
+      }
+
+      const filename = Date.now() + '.png';
+      const filepath = path.resolve('static', filename);
+
+      fs.writeFileSync(filepath, buffer);
+
+      avatarImage = `/static/${filename}`;
+    }
 
     const hashPassword = await bcrypt.hash(password, 5);
 
     const user = await User.create({
       email,
-      userType,
+      password: hashPassword,
       username,
-      avatar: avatarImage,
-      password: hashPassword
+      userType: userType || 'normal',
+      avatar: avatarImage
     });
 
-    res.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        avatarUrl: user.avatar,
-        isPro: user.userType === 'pro'
-      }
+    return res.status(201).json({
+      id: String(user.id),
+      name: user.username,
+      avatar: user.avatar,
+      isPro: user.userType === 'pro',
+      email: user.email
     });
+
   } catch (error) {
+    console.error(error);
     next(ApiError.internal('Ошибка регистрации'));
   }
 };
@@ -58,7 +76,15 @@ export const login = async (req, res, next) => {
 
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'secret', { expiresIn: '24h' });
 
-    return res.json({ token });
+    // клиент ожидает поле accessToken
+    return res.json({
+      id: String(user.id),
+      name: user.username,
+      avatar: user.avatar,
+      isPro: user.userType === 'pro',
+      email: user.email,
+      accessToken: token
+    });
   } catch (error) {
     next(ApiError.internal('Ошибка авторизации'));
   }
@@ -80,13 +106,14 @@ export const checkAuth = (req, res, next) => {
       { expiresIn: '24h' }
     );
 
+    // формат UserData для клиента
     return res.json({
-      id: user.id,
-      email: user.email,
-      username: user.username,
+      id: String(user.id),
+      name: user.username,
       avatar: user.avatar,
       isPro: user.userType === 'pro',
-      token
+      email: user.email,
+      accessToken: token
     });
   } catch (error) {
     next(ApiError.internal('Ошибка проверки авторизации'));

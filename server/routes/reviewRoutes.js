@@ -6,6 +6,8 @@ const router = express.Router();
 
 router.get('/:offerId', getReviewsByOfferId);
 router.post('/:offerId', authenticateToken, addReview);
+// под клиентский POST /comments
+router.post('/', authenticateToken, addReview);
 
 export default router;
 
