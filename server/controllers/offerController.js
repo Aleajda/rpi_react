@@ -14,28 +14,42 @@ export async function createOffer(req, res, next) {
       previewImageBase64, photosBase64
     } = req.body;
 
-    if (!previewImageBase64) {
-      return next(ApiError.badRequest('Превью изображение обязательно (previewImageBase64)'));
-    }
-
     // убеждаемся, что папка static есть
     if (!fs.existsSync('static')) {
       fs.mkdirSync('static');
     }
 
-    // превью из base64
-    const previewBuffer = Buffer.from(
-      String(previewImageBase64).replace(/^data:image\/\w+;base64,/, ''),
-      'base64'
-    );
-    const previewFilename = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.png`;
-    const previewPath = path.join('static', previewFilename);
-    fs.writeFileSync(previewPath, previewBuffer);
-    const previewImagePath = `/static/${previewFilename}`;
+    // multipart/form-data: previewImage как файл (preferred)
+    // fallback: previewImageBase64 как раньше
+    let previewImagePath = null;
+    const previewFromUpload = req.files?.previewImage?.[0];
 
-    // массив фотографий из base64
+    if (previewFromUpload?.filename) {
+      previewImagePath = `/static/${previewFromUpload.filename}`;
+    } else if (previewImageBase64) {
+      const previewBuffer = Buffer.from(
+        String(previewImageBase64).replace(/^data:image\/\w+;base64,/, ''),
+        'base64'
+      );
+      const previewFilename = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.png`;
+      const previewPath = path.join('static', previewFilename);
+      fs.writeFileSync(previewPath, previewBuffer);
+      previewImagePath = `/static/${previewFilename}`;
+    }
+
+    if (!previewImagePath) {
+      return next(ApiError.badRequest('Превью изображение обязательно (previewImage)'));
+    }
+
+    // фотографии: multipart files (preferred) или base64[] (fallback)
     let processedPhotos = [];
-    if (Array.isArray(photosBase64)) {
+
+    const photosFromUpload = req.files?.photos;
+    if (Array.isArray(photosFromUpload) && photosFromUpload.length > 0) {
+      processedPhotos = photosFromUpload
+        .filter((f) => f?.filename)
+        .map((f) => `/static/${f.filename}`);
+    } else if (Array.isArray(photosBase64)) {
       processedPhotos = photosBase64.map((photoBase64) => {
         const photoBuffer = Buffer.from(
           String(photoBase64).replace(/^data:image\/\w+;base64,/, ''),
@@ -64,18 +78,18 @@ export async function createOffer(req, res, next) {
       city,
       previewImage: previewImagePath,
       photos: processedPhotos,
-      isPremium,
-      isFavorite,
-      rating,
+      isPremium: isPremium === true || isPremium === 'true' || isPremium === '1' || isPremium === 1,
+      isFavorite: isFavorite === true || isFavorite === 'true' || isFavorite === '1' || isFavorite === 1,
+      rating: rating === undefined || rating === null || rating === '' ? null : Number(rating),
       type,
-      rooms,
-      guests,
-      price,
+      rooms: rooms === undefined || rooms === null || rooms === '' ? null : Number(rooms),
+      guests: guests === undefined || guests === null || guests === '' ? null : Number(guests),
+      price: price === undefined || price === null || price === '' ? null : Number(price),
       features: parsedFeatures,
-      commentsCount,
-      latitude,
-      longitude,
-      authorId: userId
+      commentsCount: commentsCount === undefined || commentsCount === null || commentsCount === '' ? 0 : Number(commentsCount),
+      latitude: latitude === undefined || latitude === null || latitude === '' ? null : Number(latitude),
+      longitude: longitude === undefined || longitude === null || longitude === '' ? null : Number(longitude),
+      authorId: userId ?? req.user?.id
     });
 
     return res.status(201).json(adaptFullOfferToClient(offer, null));

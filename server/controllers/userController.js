@@ -7,7 +7,6 @@ import path from 'path';
 export const registration = async (req, res, next) => {
   try {
     const { email, password, username, userType, avatarBase64 } = req.body;
-
     if (!email || !password || !username) {
       return next(ApiError.badRequest('Email, password и username обязательны'));
     }
@@ -19,9 +18,12 @@ export const registration = async (req, res, next) => {
 
     let avatarImage = null;
 
-    if (avatarBase64) {
-
-      const base64Data = avatarBase64.replace(/^data:image\/\w+;base64,/, '');
+    // multipart/form-data: avatar как файл
+    if (req.file?.filename) {
+      avatarImage = `/static/${req.file.filename}`;
+    } else if (avatarBase64) {
+      // совместимость: avatar как base64 в JSON/form
+      const base64Data = String(avatarBase64).replace(/^data:image\/\w+;base64,/, '');
       const buffer = Buffer.from(base64Data, 'base64');
 
       if (!fs.existsSync('static')) {
