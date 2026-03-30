@@ -1,9 +1,13 @@
-export type AuthData = {
-  email: string;
-  password: string;
-};
-
 export type UserData = {
-  token: string;
+    id: string;
+    name: string;
+    avatar: string;
+    isPro: boolean;
+    email: string;
+    accessToken: string;
 };
 
+export type AuthData = {
+    email: string;
+    password: string;
+}

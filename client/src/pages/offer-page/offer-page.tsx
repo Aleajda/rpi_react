@@ -1,124 +1,194 @@
-import type { JSX } from 'react';
-import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import type { FullOffer } from '../../types/offer';
-import { api } from '../../store';
-import { AppRoute } from '../../consts';
+import React, { useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { NotFoundPage } from "../not-found-page/not-found-page";
+import { ReviewsForm } from "../../components/reviews-form/reviews-form";
+import { ReviewsList } from "../../components/reviews-list/reviews-list";
+import Map from "../../components/map/map";
+import { NearPlacesCardList } from "../../components/near-places-list/near-places-list";
+import { useAppDispatch, useAppSelector } from "../../hooks";
+import { fetchFullOfferAction, fetchReviewsAction, toggleFavoriteOfferAction } from "../../store/api-action";
+import { OffersList } from "../../types/offer";
+import AppHeader from "../../components/app-header/app-header";
+import { AuthorizationStatus } from "../../const";
+import LoadingPage from "../../components/loading-page/loading-page";
 
-type OfferPageParams = {
-  id: string;
-};
+function OfferPage() {
+    const { id } = useParams<{ id: string }>();
+    const dispatch = useAppDispatch();
 
-export default function OfferPage(): JSX.Element {
-  const { id } = useParams<OfferPageParams>();
-  const [offer, setOffer] = useState<FullOffer | null>(null);
+    const offers = useAppSelector((state) => state.offers);
+    const offer = useAppSelector((state) => state.fullOffer);
+    const isFullOfferDataLoading = useAppSelector((state) => state.isFullOfferDataLoading);
+    const authorizationStatus = useAppSelector((state) => state.authorizationStatus);
+    const isAuthorized = authorizationStatus === AuthorizationStatus.Auth;
 
-  useEffect(() => {
-    const loadOffer = async () => {
-      if (!id) {
-        return;
-      }
+    useEffect(() => {
+        if (id) {
+            dispatch(fetchFullOfferAction(id));
+            dispatch(fetchReviewsAction(id));
+        }
+    }, [id, dispatch]);
 
-      const { data } = await api.get<FullOffer>(`/offers/${id}`);
-      setOffer(data);
+    if (isFullOfferDataLoading) {
+        return <LoadingPage />;
+    }
+
+    if (!offer) {
+        return <NotFoundPage />;
+    }
+
+    const hostAvatarSrc = offer.host.avatarUrl?.trim()
+        ? offer.host.avatarUrl
+        : '/img/avatar.svg';
+
+    const handleFavoriteClick = () => {
+        dispatch(toggleFavoriteOfferAction({
+            offerId: offer.id,
+            status: offer.isFavorite ? 0 : 1,
+        }));
     };
 
-    loadOffer();
-  }, [id]);
+    const ratingPercent = Math.round(offer.rating * 20);
 
-  if (!offer) {
+    const nearOffers = offers
+        .filter((o) => String(o.id) !== offer.id && o.city.name === offer.city.name)
+        .slice(0, 3);
+
+    const nearOffersList: OffersList[] = nearOffers.map((o) => ({
+        id: o.id,
+        title: o.title,
+        type: o.type,
+        price: o.price,
+        isPremium: o.isPremium,
+        rating: o.rating,
+        previewImage: o.previewImage,
+        city: o.city,
+        location: o.location,
+        isFavorite: o.isFavorite ?? false
+    }));
+
+    const city = {
+        lat: offer.city.location.latitude,
+        lng: offer.city.location.longitude,
+        zoom: offer.city.location.zoom
+    };
+
+    const points = [
+        {
+            id: offer.id,
+            title: offer.title,
+            lat: offer.location.latitude,
+            lng: offer.location.longitude
+        }
+    ];
+
     return (
-      <div className="page">
-        <main className="page__main page__main--offer">
-          <p>Loading offer...</p>
-        </main>
-      </div>
-    );
-  }
+        <div className="page">
+            <AppHeader />
 
-  const ratingWidth = `${(offer.rating / 5) * 100}%`;
-
-  return (
-    <div className="page">
-      <header className="header">
-        <div className="container">
-          <div className="header__wrapper">
-            <div className="header__left">
-              <Link className="header__logo-link" to={AppRoute.Main}>
-                <img className="header__logo" src="img/logo.svg" alt="Rent service logo" width="81" height="41" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="page__main page__main--offer">
-        <section className="offer">
-          <div className="offer__gallery-container container">
-            <div className="offer__gallery">
-              {offer.photos.map((photo) => (
-                <div key={photo} className="offer__image-wrapper">
-                  <img className="offer__image" src={photo} alt={offer.title} />
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="offer__container container">
-            <div className="offer__wrapper">
-              {offer.isPremium && (
-                <div className="offer__mark">
-                  <span>Premium</span>
-                </div>
-              )}
-              <div className="offer__name-wrapper">
-                <h1 className="offer__name">
-                  {offer.title}
-                </h1>
-              </div>
-              <div className="offer__rating rating">
-                <div className="offer__stars rating__stars">
-                  <span style={{ width: ratingWidth }}></span>
-                  <span className="visually-hidden">Rating</span>
-                </div>
-                <span className="offer__rating-value rating__value">{offer.rating}</span>
-              </div>
-              <ul className="offer__features">
-                <li className="offer__feature offer__feature--entire">
-                  {offer.type}
-                </li>
-                <li className="offer__feature offer__feature--adults">
-                  Max {offer.guests} adults
-                </li>
-              </ul>
-              <div className="offer__price">
-                <b className="offer__price-value">&euro;{offer.price}</b>
-                <span className="offer__price-text">&nbsp;night</span>
-              </div>
-              <div className="offer__inside">
-                <h2 className="offer__inside-title">What&apos;s inside</h2>
-                <ul className="offer__inside-list">
-                  {offer.features.map((feature) => (
-                    <li key={feature} className="offer__inside-item">{feature}</li>
-                  ))}
-                </ul>
-              </div>
-              {offer.host && (
-                <div className="offer__host">
-                  <h2 className="offer__host-title">Meet the host</h2>
-                  <div className="offer__host-user user">
-                    <div className={`offer__avatar-wrapper user__avatar-wrapper${offer.host.isPro ? ' offer__avatar-wrapper--pro' : ''}`}>
-                      <img className="offer__avatar user__avatar" src={offer.host.avatarUrl} width="74" height="74" alt="Host avatar" />
+            <main className="page__main page__main--offer">
+                <section className="offer">
+                    <div className="offer__gallery-container container">
+                        <div className="offer__gallery">
+                            {offer.images.map((src, i) => (
+                                <div className="offer__image-wrapper" key={i}>
+                                    <img className="offer__image" src={src} alt="Photo studio" />
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                    <span className="offer__user-name">{offer.host.name}</span>
-                    {offer.host.isPro && <span className="offer__user-status">Pro</span>}
-                  </div>
+
+                    <div className="offer__container container">
+                        <div className="offer__wrapper">
+                            {offer.isPremium && (
+                                <div className="offer__mark">
+                                    <span>Premium</span>
+                                </div>
+                            )}
+                            <div className="offer__name-wrapper">
+                                <h1 className="offer__name">{offer.title}</h1>
+                                {isAuthorized && (
+                                    <button
+                                        onClick={handleFavoriteClick}
+                                        className={`offer__bookmark-button ${offer.isFavorite ? 'offer__bookmark-button--active' : ''} button`}
+                                        type="button"
+                                    >
+                                        <svg className="offer__bookmark-icon" width="31" height="33">
+                                            <use xlinkHref="#icon-bookmark"></use>
+                                        </svg>
+                                        <span className="visually-hidden">{offer.isFavorite ? 'In bookmarks' : 'To bookmarks'}</span>
+                                    </button>
+                                )}
+                            </div>
+                            <div className="offer__rating rating">
+                                <div className="offer__stars rating__stars">
+                                    <span style={{ width: `${ratingPercent}%` }}></span>
+                                    <span className="visually-hidden">Rating</span>
+                                </div>
+                                <span className="offer__rating-value rating__value">{offer.rating}</span>
+                            </div>
+
+                            <ul className="offer__features">
+                                <li className="offer__feature offer__feature--entire">{offer.type}</li>
+                                <li className="offer__feature offer__feature--bedrooms">{offer.bedrooms} Bedrooms</li>
+                                <li className="offer__feature offer__feature--adults">Max {offer.maxAdults} adults</li>
+                            </ul>
+
+                            <div className="offer__price">
+                                <b className="offer__price-value">&euro;{offer.price}</b>
+                                <span className="offer__price-text">&nbsp;night</span>
+                            </div>
+
+                            <div className="offer__inside">
+                                <h2 className="offer__inside-title">What&apos;s inside</h2>
+                                <ul className="offer__inside-list">
+                                    {offer.goods.map((item) => (
+                                        <li className="offer__inside-item" key={item}>{item}</li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            <div className="offer__host">
+                                <h2 className="offer__host-title">Meet the host</h2>
+                                <div className="offer__host-user user">
+                                    <div className={`offer__avatar-wrapper user__avatar-wrapper ${offer.host.isPro ? "offer__avatar-wrapper--pro" : ""}`}>
+                                        <img
+                                            className="offer__avatar user__avatar"
+                                            src={hostAvatarSrc}
+                                            width="74"
+                                            height="74"
+                                            alt="Host avatar"
+                                        />
+                                    </div>
+                                    <span className="offer__user-name">{offer.host.name}</span>
+                                    {offer.host.isPro && <span className="offer__user-status">Pro</span>}
+                                </div>
+                                <div className="offer__description">
+                                    <p className="offer__text">{offer.description}</p>
+                                </div>
+                            </div>
+
+                            <section className="offer__reviews reviews">
+                                <ReviewsList />
+                                {isAuthorized ? <ReviewsForm /> : <></>}
+                            </section>
+                        </div>
+                    </div>
+
+                    <section className="offer__map map">
+                        <Map city={city} points={points} />
+                    </section>
+                </section>
+
+                <div className="container">
+                    <section className="near-places places">
+                        <h2 className="near-places__title">Other places in the neighbourhood</h2>
+                        <NearPlacesCardList offersList={nearOffersList} />
+                    </section>
                 </div>
-              )}
-            </div>
-          </div>
-          <section className="offer__map map"></section>
-        </section>
-      </main>
-    </div>
-  );
+            </main>
+        </div>
+    );
 }
+
+export { OfferPage };

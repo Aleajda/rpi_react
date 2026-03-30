@@ -1,13 +1,13 @@
-import type { JSX } from 'react';
+import { JSX } from 'react';
 import { useAppSelector } from '../../hooks';
 import './error-message.css';
-import { getError } from '../../store/selectors';
 
-export function ErrorMessage(): JSX.Element | null {
-  const error = useAppSelector(getError);
+function ErrorMessage(): JSX.Element | null {
+  const error = useAppSelector((state) => state.error);
 
-  return error
-    ? <div className="error-message">{ error }</div>
+  return (error)
+    ? <div className='error-message'>{ error }</div>
     : null;
 }
 
+export { ErrorMessage };

@@ -1,12 +1,67 @@
-import { createAction } from '@reduxjs/toolkit';
-import type { OffersList } from '../types/offer';
-import type { AuthorizationStatusType } from '../types/authorization-status';
+import { createAction } from "@reduxjs/toolkit";
+import { CityOffer, FullOffer, OffersList } from "../types/offer";
+import { AuthorizationStatusType } from "../types/authorization-status";
+import { UserData } from "../types/user-data";
+import { Review } from "../types/reviews";
 
-export const offersCityList = createAction<OffersList>('data/offersCityList');
+const changeCity = createAction('offers/changeCity', (city: CityOffer) => ({
+    payload: city
+}));
 
-export const requireAuthorization = createAction<AuthorizationStatusType>('user/requireAuthorization');
+const offersCityList = createAction('offers/offersCityList', (offers: OffersList[]) => ({
+    payload: offers
+}));
 
-export const setError = createAction<string | null>('app/setError');
+const fullOffer = createAction('offers/fullOffer', (offer: FullOffer) => ({
+    payload: offer
+}))
 
-export const setOffersDataLoadingStatus = createAction<boolean>('data/setOffersDataLoadingStatus');
+const favoriteOffer = createAction('offers/favoriteOffer', (offer: OffersList[]) => ({
+    payload: offer
+}));
 
+const requireAuthorization = createAction<AuthorizationStatusType>('user/requireAuthorization');
+
+const setError = createAction('setError', (error: string | null) => ({
+    payload: error
+}));
+
+const setOffersDataLoadingStatus = createAction<boolean>('data/setOffersDataLoadingStatus');
+const setFullOfferDataLoadingStatus = createAction<boolean>('data/setFullOfferDataLoadingStatus');
+const setFavoriteOfferDataLoadingStatus = createAction<boolean>('data/setFavoriteOfferDataLoadingStatus');
+
+const setUserData = createAction<UserData | null>('user/setUserData');
+
+const setReviews = createAction('data/setReviews', (reviews: Review[]) => ({
+    payload: reviews
+}));
+
+const setReviewsDataLoadingStatus = createAction<boolean>('data/setReviewsDataLoadingStatus');
+
+const setReviewSendingStatus = createAction<boolean>('data/setReviewSendingStatus');
+
+const addReview = createAction('data/addReview', (review: Review) => ({
+    payload: review
+}));
+
+const toogleFavoriteOffer = createAction('offers/toogleFavoriteOffer', (offer: OffersList) => ({
+    payload: offer
+}));
+
+export {
+    changeCity,
+    offersCityList,
+    requireAuthorization,
+    setError,
+    setOffersDataLoadingStatus,
+    setUserData,
+    fullOffer,
+    setFullOfferDataLoadingStatus,
+    setReviews,
+    setReviewsDataLoadingStatus,
+    setReviewSendingStatus,
+    addReview,
+    favoriteOffer,
+    setFavoriteOfferDataLoadingStatus,
+    toogleFavoriteOffer
+};

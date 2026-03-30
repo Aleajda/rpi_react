@@ -1,23 +1,23 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import { Provider } from 'react-redux';
-import { BrowserRouter } from 'react-router-dom';
-import './index.css';
-import App from './components/app/app';
-import { store } from './store';
-import { ErrorMessage } from './components/error-message/error-message';
-import { checkAuthAction, fetchOffersAction } from './store/api-actions';
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import App from './components/app/app'
+import { Setting } from './const'
+import { Provider } from 'react-redux'
+import { store } from './store'
+import { ErrorMessage } from './components/error-message/error-message'
+import { checkAuthAction, fetchOffersAction } from './store/api-action'
 
 store.dispatch(checkAuthAction());
 store.dispatch(fetchOffersAction());
 
-createRoot(document.getElementById('root')!).render(
+const root = createRoot(document.getElementById('root') as HTMLElement)
+
+root.render(
   <StrictMode>
     <Provider store={store}>
-      <BrowserRouter>
-        <ErrorMessage />
-        <App />
-      </BrowserRouter>
+      <ErrorMessage />
+      <App/>
     </Provider>
-  </StrictMode>
-);
+  </StrictMode>,
+)
+

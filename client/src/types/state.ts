@@ -1,12 +1,5 @@
-import type { AuthorizationStatusType } from './authorization-status';
-import type { OffersList } from './offer';
+import { store } from "../store";
 
-export type State = {
-  offers: OffersList;
-  authorizationStatus: AuthorizationStatusType;
-  error: string | null;
-  isOffersDataLoading: boolean;
-};
+export type State = ReturnType<typeof store.getState>;
 
-export type AppDispatch = (action: unknown) => void;
-
+export type AppDispatch = typeof store.dispatch;
