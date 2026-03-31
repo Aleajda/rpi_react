@@ -58,7 +58,7 @@ function MainPage() {
         <div className="page page--gray page--main">
             <AppHeader />
 
-            <main className="page__main page__main--index">
+            <main className={`page__main page__main--index ${isEmpty ? 'page__main--index-empty' : ''}`}>
                 <h1 className="visually-hidden">Cities</h1>
                 <div className="tabs">
                     <section className="locations container">
@@ -66,28 +66,37 @@ function MainPage() {
                     </section>
                 </div>
                 <div className="cities">
-                    <div className="cities__places-container container">
-                        <section className="cities__places places">
-                            <h2 className="visually-hidden">Places</h2>
-                            {isEmpty ? (
-                                <p style={{fontSize: '24px', fontWeight: '700' }}>There are no offers in this city yet</p>
-                            ) : (
-                                <>
-
+                    <div className={`cities__places-container container ${isEmpty ? 'cities__places-container--empty' : ''}`}>
+                        {isEmpty ? (
+                            <>
+                                <section className="cities__no-places">
+                                    <div className="cities__status-wrapper tabs__content">
+                                        <b className="cities__status">No places to stay available</b>
+                                        <p className="cities__status-description">
+                                            We could not find any property available at the moment in {selectedCity?.name}
+                                        </p>
+                                    </div>
+                                </section>
+                                <div className="cities__right-section"></div>
+                            </>
+                        ) : (
+                            <>
+                                <section className="cities__places places">
+                                    <h2 className="visually-hidden">Places</h2>
                                     <SortOptions activeSorting={activeSort} onChange={(newSorting) => setActiveSort(newSorting)} />
                                     <b className="places__found">{rentalOffersCount} places to stay in {selectedCity?.name}</b>
                                     <CitiesCardList
                                         offersList={sortOffersByType(selectedCityOffers, activeSort)}
                                         onListItemHover={handleListItemHover}
                                     />
-                                </>
-                            )}
-                        </section>
-                        <div className="cities__right-section">
-                            <section className="cities__map map">
-                                <Map city={city} points={points} selectedPointId={selectedOfferId} />
-                            </section>
-                        </div>
+                                </section>
+                                <div className="cities__right-section">
+                                    <section className="cities__map map">
+                                        <Map city={city} points={points} selectedPointId={selectedOfferId} />
+                                    </section>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             </main>

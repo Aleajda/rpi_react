@@ -14,6 +14,53 @@ export async function createOffer(req, res, next) {
       previewImageBase64, photosBase64
     } = req.body;
 
+    // базовая нормализация и валидация входных данных до сохранения,
+    // чтобы возвращать корректный 400, а не 500 от БД
+    const normalizedTitle = String(title ?? '').trim();
+    const normalizedDescription = String(description ?? '').trim();
+
+    if (normalizedTitle.length < 10 || normalizedTitle.length > 100) {
+      return next(ApiError.badRequest('Поле title должно быть длиной 10-100 символов'));
+    }
+    if (normalizedDescription.length < 20 || normalizedDescription.length > 1024) {
+      return next(ApiError.badRequest('Поле description должно быть длиной 20-1024 символов'));
+    }
+
+    if (!city) {
+      return next(ApiError.badRequest('Поле city обязательно'));
+    }
+    if (!type) {
+      return next(ApiError.badRequest('Поле type обязательно'));
+    }
+
+    const roomsNum = rooms === undefined || rooms === null || rooms === '' ? NaN : Number(rooms);
+    const guestsNum = guests === undefined || guests === null || guests === '' ? NaN : Number(guests);
+    const priceNum = price === undefined || price === null || price === '' ? NaN : Number(price);
+    const latNum = latitude === undefined || latitude === null || latitude === '' ? NaN : Number(latitude);
+    const lngNum = longitude === undefined || longitude === null || longitude === '' ? NaN : Number(longitude);
+
+    if (!Number.isFinite(roomsNum)) {
+      return next(ApiError.badRequest('Поле rooms обязательно и должно быть числом'));
+    }
+    if (!Number.isFinite(guestsNum)) {
+      return next(ApiError.badRequest('Поле guests обязательно и должно быть числом'));
+    }
+    if (!Number.isFinite(priceNum)) {
+      return next(ApiError.badRequest('Поле price обязательно и должно быть числом'));
+    }
+    if (!Number.isFinite(latNum) || !Number.isFinite(lngNum)) {
+      return next(ApiError.badRequest('Поля latitude и longitude обязательны и должны быть числами'));
+    }
+
+    // rating: по умолчанию 1.0, если не пришло
+    let ratingNum = rating === undefined || rating === null || rating === '' ? 1 : Number(rating);
+    if (!Number.isFinite(ratingNum)) {
+      return next(ApiError.badRequest('Поле rating должно быть числом от 1 до 5'));
+    }
+    if (ratingNum < 1 || ratingNum > 5) {
+      return next(ApiError.badRequest('Поле rating должно быть в диапазоне 1..5'));
+    }
+
     // убеждаемся, что папка static есть
     if (!fs.existsSync('static')) {
       fs.mkdirSync('static');
@@ -71,24 +118,57 @@ export async function createOffer(req, res, next) {
       }
     }
 
+    // Нормализация и валидация features: только допустимые значения enum из модели
+    const allowedFeatures = [
+      'Breakfast',
+      'Air conditioning',
+      'Laptop friendly workspace',
+      'Baby seat',
+      'Washer',
+      'Towels',
+      'Fridge'
+    ];
+    const lowerToCanonical = allowedFeatures.reduce((acc, item) => {
+      acc[item.toLowerCase()] = item;
+      return acc;
+    }, {});
+
+    const normalizedFeatures = Array.isArray(parsedFeatures)
+      ? parsedFeatures
+          .map((f) => String(f).trim())
+          .filter((f) => f.length > 0)
+          .map((f) => lowerToCanonical[f.toLowerCase()] ?? f)
+      : [];
+
+    const invalidFeature = normalizedFeatures.find(
+      (f) => !allowedFeatures.includes(f)
+    );
+    if (invalidFeature) {
+      return next(
+        ApiError.badRequest(
+          `Недопустимое значение для features: "${invalidFeature}". Разрешены: ${allowedFeatures.join(', ')}`
+        )
+      );
+    }
+
     const offer = await Offer.create({
-      title,
-      description,
+      title: normalizedTitle,
+      description: normalizedDescription,
       publishDate,
       city,
       previewImage: previewImagePath,
       photos: processedPhotos,
       isPremium: isPremium === true || isPremium === 'true' || isPremium === '1' || isPremium === 1,
       isFavorite: isFavorite === true || isFavorite === 'true' || isFavorite === '1' || isFavorite === 1,
-      rating: rating === undefined || rating === null || rating === '' ? null : Number(rating),
+      rating: ratingNum,
       type,
-      rooms: rooms === undefined || rooms === null || rooms === '' ? null : Number(rooms),
-      guests: guests === undefined || guests === null || guests === '' ? null : Number(guests),
-      price: price === undefined || price === null || price === '' ? null : Number(price),
-      features: parsedFeatures,
+      rooms: roomsNum,
+      guests: guestsNum,
+      price: priceNum,
+      features: normalizedFeatures,
       commentsCount: commentsCount === undefined || commentsCount === null || commentsCount === '' ? 0 : Number(commentsCount),
-      latitude: latitude === undefined || latitude === null || latitude === '' ? null : Number(latitude),
-      longitude: longitude === undefined || longitude === null || longitude === '' ? null : Number(longitude),
+      latitude: latNum,
+      longitude: lngNum,
       authorId: userId ?? req.user?.id
     });
 

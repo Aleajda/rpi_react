@@ -47,6 +47,7 @@ Offer.init({
   rating: {
     type: DataTypes.DECIMAL(2, 1),
     allowNull: false,
+    defaultValue: 1.0,
     validate: { min: 1, max: 5 }
   },
   type: {

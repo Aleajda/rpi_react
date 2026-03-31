@@ -57,6 +57,22 @@ describe('Header — авторизованный пользователь', () 
 
         expect(screen.getByText('2')).toBeInTheDocument();
     });
+
+    it('показывает аватар при относительном пути с сервера', () => {
+        renderWithProviders(<AppHeader />, {
+            storeOverrides: {
+                authorizationStatus: AuthorizationStatus.Auth,
+                userData: {
+                    ...fakeUserInfo,
+                    avatar: '/static/user-avatar.jpg',
+                },
+            },
+        });
+
+        const avatar = screen.getByRole('img', { name: /user avatar/i });
+        expect(avatar).toBeInTheDocument();
+        expect(avatar).toHaveAttribute('src', 'http://localhost:5000/static/user-avatar.jpg');
+    });
 });
 
 describe('Header — Unknown', () => {

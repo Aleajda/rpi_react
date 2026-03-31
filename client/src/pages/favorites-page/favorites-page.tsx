@@ -42,9 +42,13 @@ function FavoritesPage() {
                         <h1 className="favorites__title">Saved listing</h1>
 
                         {isEmpty ? (
-                            <p style={{ textAlign: 'center', fontSize: '24px', fontWeight: '700' }}>
-                                No saved offers yet
-                            </p>
+                            <section className="favorites favorites--empty">
+                                <h1 className="visually-hidden">Favorites (empty)</h1>
+                                <div className="favorites__status-wrapper">
+                                <b className="favorites__status">Nothing yet saved.</b>
+                                <p className="favorites__status-description">Save properties to narrow down search or plan your future trips.</p>
+                                </div>
+                            </section>
                         ) : (
                             <ul className="favorites__list">
                                 {Object.entries(groupedFavorites).map(

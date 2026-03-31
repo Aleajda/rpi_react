@@ -4,12 +4,27 @@ import { logoutAction } from "../../store/api-action";
 import { AppRoute, AuthorizationStatus } from "../../const";
 import { Logo } from "../logo/logo";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000';
+
+const getUserAvatarUrl = (avatar?: string) => {
+    if (!avatar?.trim()) {
+        return null;
+    }
+
+    if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
+        return avatar;
+    }
+
+    return `${API_BASE_URL}${avatar.startsWith('/') ? avatar : `/${avatar}`}`;
+};
+
 function AppHeader() {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
     const userData = useAppSelector((state) => state.userData);
     const authorizationStatus = useAppSelector((state) => state.authorizationStatus);
+    const userAvatarUrl = getUserAvatarUrl(userData?.avatar);
 
     const offers = useAppSelector((state) => state.offers);
     const favoriteLength = offers.filter(o => o.isFavorite).length;
@@ -35,7 +50,9 @@ function AppHeader() {
                                         <li className="header__nav-item user">
                                             <div className="header__nav-link header__nav-link--profile">
                                                 <div className="header__avatar-wrapper user__avatar-wrapper">
-                                                    <img src={userData?.avatar} />
+                                                    {userAvatarUrl && (
+                                                        <img src={userAvatarUrl} alt="User avatar" />
+                                                    )}
                                                 </div>
                                                 <span className="header__user-name user__name">
                                                     {userData?.email}
